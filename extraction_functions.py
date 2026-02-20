@@ -186,7 +186,7 @@ def met_office_table_scraping(url):
         th_texts_temp[i]=f"{date3} {th_texts_temp[i]}:00"
     fecha=th_texts_temp.copy()
 
-    print(fecha)
+    #print(fecha)
 
     #create disctionary for dataframe
     data_dict = {
