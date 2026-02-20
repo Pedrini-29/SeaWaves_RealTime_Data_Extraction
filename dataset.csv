@@ -1,0 +1,26 @@
+StationCode,Station_Name,Longitude,Latitude,Depth,Conjunto de datos,URL,widget_columns
+2136,Boya de Bilbao-Vizcaya,-3.0261,43.6309,580,REDEXT,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=2136&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,7
+1135,Boya Costera de Abra-Zierbena,-3.0697,43.367,53,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1135&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+1101,Boya de Pasaia II,-1.8889,43.3629,33.5,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1101&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+1117,Boya de Gijon ,-5.66,43.62,54,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1117&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+2244,Boya de Estaca de Bares,-7.6495,44.1201,1800,REDEXT,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=2244&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,7
+1239,Boya de Langosteira II,-8.55,43.35,60,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1239&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+2248,Boya de Cabo Silleiro,-9.4293,42.1177,600,REDEXT,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=2248&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,7
+1512,Boya de Ceuta,-5.33,35.9,21,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1512&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+1560,Boya de Melilla,-2.9438,35.3193,15,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1560&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+2442,Boya de Gran Canaria,-15.8179,28.1797,780,REDEXT,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=2442&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+1414,Boya de Las Palmas Este,-15.4,28.05,30,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1414&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+1421,Boya de Santa Cruz de Tenerife,-16.239,28.4648,56,REDCOS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=1421&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,6
+2446,Boya de Tenerife Sur,-16.6144,27.9966,710,REDEXT,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=2446&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,7
+32001,Boya de Gascogne ,-5,45.3,,ODASMAWS,https://portus.puertos.es/#/dataTablesRTWidget?stationCode=32001&variables=WAVE&isRadar=false&latId=&lonId=&locale=es,2
+32163,Boya Brittany ,-8.47,47.55,,METOFFICE,https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/observations/162163,0
+22092,Boya M3 SW of Mizen Head-MI ,-10.33,51.13,,METOFFICE,https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/observations/162092,0
+6200079,Buoy Saint-Jean-de-Luz,-1.6766,43.403,,LABOUEE,https://labouee.app/en/buoy/saint-jean-de-luz,
+6200066,Buoy Anglet,-1.614,43.53,,LABOUEE,https://labouee.app/en/buoy/anglet,
+6200064,Buoy Cap Ferret,-1.4478,44.6503,,LABOUEE,https://labouee.app/en/buoy/cap-ferret,
+6200080,Buoy Oléron Large,-1.8336,45.9163,,LABOUEE,https://labouee.app/en/buoy/oleron-large,
+6200067,Buoy Ile d'Yeu Nord,-2.295,46.8332,,LABOUEE,https://labouee.app/en/buoy/ile-d-yeu-nord,
+6200251,Buoy Noirmoutier,-2.72222,46.91667,,LABOUEE,https://labouee.app/en/buoy/noirmoutier,
+6200078,Buoy SEM-REV - Plateau du Four,-2.787,47.239,,LABOUEE,https://labouee.app/en/buoy/sem-rev-plateau-du-four,
+6200074,Buoy Belle-Ile,-3.285,47.285,,LABOUEE,https://labouee.app/en/buoy/belle-ile,
+6200069,Buoy Les Pierres Noires,-4.9683,48.2903,,LABOUEE,https://labouee.app/en/buoy/les-pierres-noires,
