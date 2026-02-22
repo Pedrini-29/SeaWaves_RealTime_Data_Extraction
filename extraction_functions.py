@@ -12,6 +12,7 @@ import pandas as pd
 import requests
 import json
 import datetime
+import os
 
 #defining web scraping function
 def scraping_method(url,station,origin):
@@ -61,8 +62,11 @@ def met_office_table_scraping(url):
     options = Options()
     options.add_argument("--headless=new")
 
+     # Use a local writable cache for the webdriver to avoid permission issues
+    driver_cache_dir = os.path.join(os.getcwd(), ".wdm_cache")
+    os.makedirs(driver_cache_dir, exist_ok=True)
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
+        service=Service(ChromeDriverManager(path=driver_cache_dir).install()),
         options=options,
     )
 
@@ -206,8 +210,11 @@ def labouee_table_scraping(url):
     options = Options()
     options.add_argument("--headless=new")
 
+    # Use a local writable cache for the webdriver to avoid permission issues
+    driver_cache_dir = os.path.join(os.getcwd(), ".wdm_cache")
+    os.makedirs(driver_cache_dir, exist_ok=True)
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
+        service=Service(ChromeDriverManager(path=driver_cache_dir).install()),
         options=options,
     )
 

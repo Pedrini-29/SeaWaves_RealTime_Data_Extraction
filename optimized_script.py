@@ -134,6 +134,38 @@ recent_df=temp_list[0].T.reset_index()
 #Create the map
 m_3 = folium.Map(location=[43.26,-2.93], zoom_start=4.5)
 
+#this makes the popups transparent
+css = """
+<style>
+.leaflet-popup-content-wrapper {
+    background: transparent;
+    box-shadow: none;
+}
+
+.leaflet-popup-tip {
+    background: transparent;
+    box-shadow: none !important;
+}
+.leaflet-popup-close-button {
+    display: none !important;
+}
+
+</style>
+"""
+m_3.get_root().html.add_child(folium.Element(css))
+
+#make the popup close on a mouse click
+js = """
+<script>
+map.on('click', function () {
+    map.closePopup();
+});
+</script>
+"""
+
+m_3.get_root().html.add_child(folium.Element(js))
+
+#data extraction
 for idx, row in recent_df.iterrows():
 
     sign_wave=row['Altura Signif. del Oleaje (m)']
