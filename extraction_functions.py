@@ -1,17 +1,14 @@
 #Import useful packages and data
+from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
 import pandas as pd
+import datetime
+
 import requests
 import json
-import datetime
 import os
 
 #defining web scraping function
@@ -57,180 +54,131 @@ def portus_table_scraping(station):
     return table_df
 
 def met_office_table_scraping(url):
-    '''This function take an URL of the real time buoys webpage from the website metoffice.gov.uk and extracts the real time data which wwill be plotted in an interactive map
-    input -> URL, output -> pandas dataframe with the most recent buoy reading'''
-    options = Options()
-    options.add_argument("--headless=new")
-
-     # Use a local writable cache for the webdriver to avoid permission issues
-    driver_cache_dir = os.path.join(os.getcwd(), ".wdm_cache")
-    os.makedirs(driver_cache_dir, exist_ok=True)
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager(path=driver_cache_dir).install()),
-        options=options,
-    )
-
-    driver.get(
-        url
-    )
-
-    # wait up to 5 s, but return earlier if the table appears
-    wait = WebDriverWait(driver, 30)
-    wait.until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "table")  # ideally a more specific selector
-        )
-    )
-
-    html = driver.page_source
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url)
+    html = driver.page_source.encode("utf-8")
     driver.quit()
 
-    #Tidy up the HTML code
     soup = BeautifulSoup(html, "html.parser")
-    
-    
-    #saves values from the table
-    td_texts = [td.get_text(strip=True) for td in soup.find_all("td")]
 
-    td_texts_temp = td_texts.copy()
+    #saves values from the table as td objects
+    td_objs=[BeautifulSoup(f"{td}","html.parser").td for td in soup.find_all("td")]
 
-    #detect first offset
-    offset = 0
-    while td_texts_temp[offset].endswith("Celsius"):
-        offset += 1
+    #initialise category containers
+    temperature_td = []
+    wind_td = []
+    humidity_td = []
+    pressure_td = []
+    dew_point_td = []
+    sea_temperature_td = []
+    wave_height_td = []
+    wave_period_td = []
 
-    #category containers
-    temperature = []
-    wind_raw = []
-    humidity = []
-    pressure = []
-    dew_point = []
-    sea_temperature = []
-    wave_height = []
-    wave_period = []
 
-    categories = [
-        temperature,
-        wind_raw,
-        humidity,
-        pressure,
-        dew_point,
-        sea_temperature,
-        wave_height,
-        wave_period,
-    ]
+    #fill category containers with td data
+    for td in td_objs:
+        if td["data-test-label"].startswith("temp"):
+            temperature_td.append(td)
+        elif td["data-test-label"].startswith("wind"):
+            wind_td.append(td)
+        elif td["data-test-label"].startswith("humidity"):
+            humidity_td.append(td)
+        elif td["data-test-label"].startswith("pressure"):
+            pressure_td.append(td)
+        elif td["data-test-label"].startswith("dewPoint"):
+            dew_point_td.append(td)
+        elif td["data-test-label"].startswith("waveHeight"):
+            wave_height_td.append(td)
+        elif td["data-test-label"].startswith("wavePeriod"):
+            wave_period_td.append(td)
+        elif td["data-test-label"].startswith("seaTemp"):
+            sea_temperature_td.append(td)
 
-    #offsets for each block
-    offsets = [offset, 24, 24 - offset]
+    #initialize empty dictionary
+    df_dict={}
 
-    idx = 0  # pointer
-    for block_offset in offsets:
-        for cat in categories:
-            cat.extend(td_texts_temp[idx:idx + block_offset])
-            idx += block_offset
-    
-    #Remove the units of measurement
-    temperature = [item.replace('°Celsius', '') for item in temperature]
-    sea_temperature = [item.replace('°Celsius', '') for item in sea_temperature]
-    pressure = [item.replace('hectopascals', '') for item in pressure]
-    dew_point = [item.replace('°Celsius', '') for item in dew_point]
-    wave_height = [item.replace('metres', '') for item in wave_height]
-    wave_period = [item.replace('seconds', '') for item in wave_period]
+    #data extraction
+    for i in range(len(temperature_td)):
 
-    #extrapolate date and time from the table
-    #saves values from the table
+        temperature=temperature_td[i]
+        wind=wind_td[i]
+        humidity=humidity_td[i]
+        pressure=pressure_td[i]
+        dew_point=dew_point_td[i]
+        sea_temperature=sea_temperature_td[i]
+        wave_height=wave_height_td[i]
+        wave_period=wave_period_td[i]
 
-    li_texts = [ li.get_text(strip=True) for li in soup.find_all("li")]
-    li_texts_date = [x for x in li_texts if x.startswith(('Mon ', 'Tue ', 'Wed ', 'Thu ', 'Fri ', 'Sat ', 'Sun '))]
+        #extract date and time
+        date_raw=temperature["data-test-label"].split('-')
+        day_time_raw=date_raw[-1].split("T")
+        time_raw=day_time_raw[1].split(":")
+        year,month,day=date_raw[1],date_raw[2],day_time_raw[0]
+        hour,minutes=time_raw[0],time_raw[1]
+        #print(year,month,day,hour,minute)
 
-    month_dict = {
-        'Jan': '01',
-        'Feb': '02',
-        'Mar': '03',
-        'Apr': '04',
-        'May': '05',
-        'Jun': '06',
-        'Jul': '07',
-        'Aug': '08',
-        'Sep': '09',
-        'Oct': '10',
-        'Nov': '11',
-        'Dec': '12'
-    }
-    day1=li_texts_date[0].split(" ")[1]
-    month1=month_dict[li_texts_date[0].split(" ")[2][:3]]
-    year1=datetime.date.today().year
-    date1=f"{year1}-{month1}-{day1}"
+        #extract temperature
+        temperature=temperature.div["data-value"]
 
-    day2=li_texts_date[1].split(" ")[1]
-    month2=month_dict[li_texts_date[1].split(" ")[2][:3]]
-    year2=datetime.date.today().year
-    date2=f"{year2}-{month2}-{day2}"
+        #extract wind speed and direction (kt)
+        wind_raw = wind.div["aria-label"].split(" ")
+        wind_speed, wind_direction = wind_raw[0], wind_raw[2]
 
-    day3=li_texts_date[2].split(" ")[1]
-    month3=month_dict[li_texts_date[2].split(" ")[2][:3]]
-    year3=datetime.date.today().year
-    date3=f"{year3}-{month3}-{day3}"
+        #extract humidity (%)
+        humidity=humidity.span["data-value"]
 
-    #print(date1, date2, date3)
+        #extract pressure (hPa)
+        pressure=pressure.span["data-value"].split('.')[0]
+        
+        #extract dew point (°C)
+        dew_point=dew_point.span["data-value"]
 
-    th_texts = [ th.get_text(strip=True) for th in soup.find_all("th")]
-    th_texts_temp = [x for x in th_texts if x.startswith(('1','2','3','4','5','6','7','8','9','0'))]
+        #extract sea temperature (°C)
+        sea_temperature=sea_temperature.span["data-value"]
 
-    #print(th_texts_temp)
-    #print(offset)
+        #extract wave height (m) and period (s)
+        wave_height=wave_height.span["data-value"]
+        wave_period=wave_period.span["data-value"]
 
-    for i in range(offset):
-        th_texts_temp[i]=f"{date1} {th_texts_temp[i]}:00"
-    offset1=offset+24
-    for i in range(offset,offset1):
-        th_texts_temp[i]=f"{date2} {th_texts_temp[i]}:00"
-    offset2=offset1+24-offset
-    for i in range(offset1,offset2):
-        th_texts_temp[i]=f"{date3} {th_texts_temp[i]}:00"
-    fecha=th_texts_temp.copy()
+        if i == 0:
+            df_dict["Temperatura (°C)"]= [f"{temperature}"]
+            df_dict["Altura Signif. del Oleaje (m)"]= [f"{wave_height}"]
+            df_dict["Periodo Medio Tm02 (s)"]= [f"{wave_period}"]
+            df_dict["Temperatura del mar (°C)"]= [f"{sea_temperature}"]
+            df_dict["Presión atmosférica (hPa)"]= [f"{pressure}"]
+            df_dict["Viento (kt)"]= [wind_speed]
+            df_dict["Dirección del viento"]= [wind_direction]
+            df_dict["Punto de rocío (°C)"]= [f"{dew_point}"]
+            df_dict["Humedad"]= [f"{humidity}%"]
+            df_dict["Fecha  (GMT)"]=[f"{year}-{month}-{day} {hour}:{minutes}:00"]
+        else:
+            df_dict["Temperatura (°C)"].append(f"{temperature}")
+            df_dict["Altura Signif. del Oleaje (m)"].append(f"{wave_height}")
+            df_dict["Periodo Medio Tm02 (s)"].append (f"{wave_period}")
+            df_dict["Temperatura del mar (°C)"].append (f"{sea_temperature}")
+            df_dict["Presión atmosférica (hPa)"].append(f"{pressure}")
+            df_dict["Viento (kt)"].append(wind_speed)
+            df_dict["Dirección del viento"].append(wind_direction)
+            df_dict["Punto de rocío (°C)"].append(f"{dew_point}")
+            df_dict["Humedad"].append(f"{humidity}%")
+            df_dict["Fecha  (GMT)"].append(f"{year}-{month}-{day} {hour}:{minutes}:00")
 
-    #print(fecha)
-
-    #create disctionary for dataframe
-    data_dict = {
-        'Temperatura del mar (°C)': sea_temperature[-1],
-        'Altura Signif. del Oleaje (m)': wave_height[-1],
-        'Periodo Medio Tm02 (s)': wave_period[-1],
-        'Fecha  (GMT)' : fecha[-1]
-    }
-
-    df = pd.DataFrame([data_dict])
+    df = pd.DataFrame(df_dict)
     return df
 
+    
 
 def labouee_table_scraping(url):
     '''This function take an URL of the real time buoys webpage from the website https://labouee.app/en and extracts the real time data which wwill be plotted in an interactive map
     input -> URL, output -> pandas dataframe with the most recent buoy reading'''
-    options = Options()
-    options.add_argument("--headless=new")
-
-    # Use a local writable cache for the webdriver to avoid permission issues
-    driver_cache_dir = os.path.join(os.getcwd(), ".wdm_cache")
-    os.makedirs(driver_cache_dir, exist_ok=True)
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager(path=driver_cache_dir).install()),
-        options=options,
-    )
-
-    driver.get(
-        url
-    )
-
-    # wait up to 5 s, but return earlier if the table appears
-    wait = WebDriverWait(driver, 30)
-    wait.until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "table")  # ideally a more specific selector
-        )
-    )
-
-    html = driver.page_source
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url)
+    driver.implicitly_wait(2)
+    html = driver.page_source.encode("utf-8")
     driver.quit()
 
     #Tidy up the HTML code
@@ -238,24 +186,24 @@ def labouee_table_scraping(url):
 
     #saves values from the table
     td_texts = [td.get_text(strip=True) for td in soup.find_all("td")]
+    #print(td_texts)
     # drop leading empty strings
     while td_texts and td_texts[0] == '':
         del td_texts[0]
 
+    # Check if td_texts is empty after cleaning
+    if not td_texts or len(td_texts) < 6:
+        print(f"Warning: Expected at least 6 data elements, but found {len(td_texts)}. URL: {url}")
+        return pd.DataFrame()  # Return empty dataframe instead of crashing
+
     #we are interested in the fist 8 values
-    
     #extract date and time values for last observation from the raw_extract 
     date_last_raw=td_texts[0].split(" ")
     month_dict = {"jan": 1, "feb":2,"mar":3,"apr":4,"may":5,"jun":6,"jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12}
     month_last=month_dict[date_last_raw[0].lower()]
     year_last=datetime.date.today().year
     day_last=date_last_raw[1].replace(',','')
-    hour, minute = date_last_raw[2].split(":")
-    hour = int(hour)
-    if date_last_raw[3].lower() == "pm" and hour != 12:
-        hour += 12
-    time_last=f"{hour:02d}:{minute}"
-    #print(time_last)
+    time_last=date_last_raw[2]
     date_last=f"{year_last}-{month_last}-{day_last} {time_last}:00"
     #extract wave values and wave energy
     wave_sig_last=td_texts[1].replace('kJ','').split("m")[0]
@@ -265,10 +213,10 @@ def labouee_table_scraping(url):
     #extract sea temperature
     sea_temperature=td_texts[5].replace('°C','')
 
+    #convert extracted data to dictionary
     df_dict={"Fecha  (GMT)":date_last,"Altura Signif. del Oleaje (m)":wave_sig_last,"Altura Máxima del Oleaje (m)":wave_max,"Energía del Oleaje (kJ)":wave_energy,"Periodo Medio Tm02 (s)":wave_period,"Temperatura del mar (°C)":sea_temperature}
 
     #convert disctionary in pd dataframe
     df = pd.DataFrame([df_dict])
-
     return df
 
