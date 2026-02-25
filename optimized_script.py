@@ -1,18 +1,7 @@
 # %%
 #Import useful packages and data
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
 
 import pandas as pd
-import requests
-import json
-import datetime
 
 #useful packages for making map data
 import branca
@@ -23,7 +12,7 @@ from folium.plugins import MarkerCluster
 
 #import neessary custom modules for data extractionand map design
 from extraction_functions import scraping_method
-from map_design_functions import fancy_html,marker_color
+from map_design_functions import fancy_html,marker_color,c_height,c_width
 
 #run map on web browser
 import webbrowser
@@ -134,22 +123,45 @@ recent_df=temp_list[0].T.reset_index()
 #Create the map
 m_3 = folium.Map(location=[43.26,-2.93], zoom_start=4.5)
 
-#this makes the popups transparent
 css = """
 <style>
+/* Popup container */
 .leaflet-popup-content-wrapper {
-    background: transparent;
-    box-shadow: none;
+    background: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border-radius: 6px;
 }
 
+/* Popup arrow */
 .leaflet-popup-tip {
-    background: transparent;
+    background: #ffffff !important;
     box-shadow: none !important;
 }
-.leaflet-popup-close-button {
-    display: none !important;
+
+/* Popup content spacing */
+.leaflet-popup-content {
+    margin: 12px 16px 16px 16px;
 }
 
+/* Close button styling */
+.leaflet-popup-close-button {
+    display: block !important;
+    color: red !important;
+    font-size: 22px !important;
+    font-weight: bold;
+    top: 6px !important;
+    right: 8px !important;
+    width: 26px !important;
+    height: 26px !important;
+    line-height: 26px !important;
+    text-align: center;
+}
+
+/* Optional: hover effect for better UX */
+.leaflet-popup-close-button:hover {
+    color: darkred !important;
+    cursor: pointer;
+}
 </style>
 """
 m_3.get_root().html.add_child(folium.Element(css))
@@ -169,11 +181,13 @@ m_3.get_root().html.add_child(folium.Element(js))
 for idx, row in recent_df.iterrows():
 
     sign_wave=row['Altura Signif. del Oleaje (m)']
-    
-    html = fancy_html(row)  # Pass recent_df to the function
-    iframe = branca.element.IFrame(html=html, width=400, height=300)
+    #print(df.loc[df["StationCode"]==row["StationCode"]]["Conjunto de datos"])
+    conjunto=df.loc[df["StationCode"]==row["StationCode"],"Conjunto de datos"].values[0]
+    html = fancy_html(row, conjunto)  # Pass recent_df to the function
+    iframe = branca.element.IFrame(html=html, width=c_width(conjunto), height=int(c_height(conjunto)))
     popup = folium.Popup(iframe, parse_html=True)
 
+    #if df.loc[df["StationCode"]==row["StationCode"],"Conjunto de datos"].isin(["REDCOS","REDEXT"]).any():
     folium.Marker([row['Latitude'], row['Longitude']], popup=popup, icon=folium.Icon(color=marker_color(sign_wave),icon_color="white",icon="water",angle=0,prefix='fa')).add_to(m_3)
                 
 m_3.save("buoys.html")
