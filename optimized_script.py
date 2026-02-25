@@ -1,18 +1,7 @@
 # %%
 #Import useful packages and data
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
 
 import pandas as pd
-import requests
-import json
-import datetime
 
 #useful packages for making map data
 import branca
@@ -21,7 +10,9 @@ import folium
 from folium import Marker
 from folium.plugins import MarkerCluster
 
+#import neessary custom modules for data extractionand map design
 from extraction_functions import scraping_method
+from map_design_functions import fancy_html,marker_color,c_height,c_width
 
 #run map on web browser
 import webbrowser
@@ -129,115 +120,74 @@ recent_df=temp_list[0].T.reset_index()
 
 
 # %%
-recent_df
-
-# %%
-#function to change the marker colour with different wave hights
-def marker_color(wave):
-    wave=float(wave)
-    if wave > 6:
-        return "black"
-    elif wave > 4:
-        return "red"
-    elif wave > 2:
-        return "orange"
-    elif wave > 1:
-        return "green"
-    elif wave > 0.5:
-        return "blue"
-    else:
-        return "gray"
-    
-def fancy_html(row):
-    
-    # Access values from the row, fallback to 'N/A'
-    altura_signif = row.get('Altura Signif. del Oleaje (m)', 'N/A') if isinstance(row, dict) else row.get('Altura Signif. del Oleaje (m)', 'N/A')
-    altura_max = row.get('Altura Máxima del Oleaje (m)', 'N/A') if isinstance(row, dict) else row.get('Altura Máxima del Oleaje (m)', 'N/A')
-    dir_media = row.get('Direcc. Media de Proced. (º)', 'N/A') if isinstance(row, dict) else row.get('Direcc. Media de Proced. (º)', 'N/A')
-    dir_pico = row.get('Direcc. de pico de proced. (º)', 'N/A') if isinstance(row, dict) else row.get('Direcc. de pico de proced. (º)', 'N/A')
-    periodo_medio = row.get('Periodo Medio Tm02 (s)', 'N/A') if isinstance(row, dict) else row.get('Periodo Medio Tm02 (s)', 'N/A')
-    periodo_pico = row.get('Periodo de Pico (s)', 'N/A') if isinstance(row, dict) else row.get('Periodo de Pico (s)', 'N/A')
-    fecha = row.get('Fecha  (GMT)', 'N/A') if isinstance(row, dict) else row.get('Fecha  (GMT)', 'N/A')
-    energia = row.get('Energía del Oleaje (kJ)', 'N/A') if isinstance(row, dict) else row.get('Energía del Oleaje (kJ)', 'N/A')
-    temp_mar = row.get('Temperatura del mar (°C)', 'N/A') if isinstance(row, dict) else row.get('Temperatura del mar (°C)', 'N/A')
-    
-    #print(altura_signif,altura_max,dir_media,dir_pico,periodo_medio,periodo_pico,fecha,energia,temp_mar)
-
-    station = row['StationCode']
-    lat = row['Latitude']
-    lon = row['Longitude']
-
-    left_col_colour = "#208AB7"
-    right_col_colour = "#C5DCE7"
-
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-<h4 style="margin-bottom:0; width:300px">{fecha}</h4>
-<h5 style="margin-top:2px; margin-bottom:6px;">Estación: {station}</h5>
-</head>
-<table style="height: 100%; width: 300px; border-collapse: collapse;">
-<tbody>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Altura significativa (Ho)</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{altura_signif} m</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Altura máxima (Hmax)</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{altura_max} m</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Dir. media</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{dir_media}°</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Dir. pico</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{dir_pico}°</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Periodo medio (Tm02)</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{periodo_medio} s</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Periodo de pico</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{periodo_pico} s</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Energía del oleaje</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{energia} kJ</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Temperatura mar</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{temp_mar} °C</td>
-</tr>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Latitude</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{lat}</td>
-<tr>
-<td style="background-color: {left_col_colour};"><span style="color: #ffffff;">Longitude</span></td>
-<td style="width: 100px; background-color: {right_col_colour};">{lon}</td>
-</tr>
-</tr>
-</tbody>
-</table>
-</html>
-"""
-
-    return html
-
-
-# %%
 #Create the map
 m_3 = folium.Map(location=[43.26,-2.93], zoom_start=4.5)
 
+css = """
+<style>
+/* Popup container */
+.leaflet-popup-content-wrapper {
+    background: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border-radius: 6px;
+}
+
+/* Popup arrow */
+.leaflet-popup-tip {
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* Popup content spacing */
+.leaflet-popup-content {
+    margin: 12px 16px 16px 16px;
+}
+
+/* Close button styling */
+.leaflet-popup-close-button {
+    display: block !important;
+    color: red !important;
+    font-size: 22px !important;
+    font-weight: bold;
+    top: 6px !important;
+    right: 8px !important;
+    width: 26px !important;
+    height: 26px !important;
+    line-height: 26px !important;
+    text-align: center;
+}
+
+/* Optional: hover effect for better UX */
+.leaflet-popup-close-button:hover {
+    color: darkred !important;
+    cursor: pointer;
+}
+</style>
+"""
+m_3.get_root().html.add_child(folium.Element(css))
+
+#make the popup close on a mouse click
+js = """
+<script>
+map.on('click', function () {
+    map.closePopup();
+});
+</script>
+"""
+
+m_3.get_root().html.add_child(folium.Element(js))
+
+#data extraction
 for idx, row in recent_df.iterrows():
 
     sign_wave=row['Altura Signif. del Oleaje (m)']
-    
-    html = fancy_html(row)  # Pass recent_df to the function
-    iframe = branca.element.IFrame(html=html, width=400, height=300)
+    #print(df.loc[df["StationCode"]==row["StationCode"]]["Conjunto de datos"])
+    conjunto=df.loc[df["StationCode"]==row["StationCode"],"Conjunto de datos"].values[0]
+    html = fancy_html(row, conjunto)  # Pass recent_df to the function
+    iframe = branca.element.IFrame(html=html, width=c_width(conjunto), height=int(c_height(conjunto)))
     popup = folium.Popup(iframe, parse_html=True)
 
+    #if df.loc[df["StationCode"]==row["StationCode"],"Conjunto de datos"].isin(["REDCOS","REDEXT"]).any():
     folium.Marker([row['Latitude'], row['Longitude']], popup=popup, icon=folium.Icon(color=marker_color(sign_wave),icon_color="white",icon="water",angle=0,prefix='fa')).add_to(m_3)
                 
 m_3.save("buoys.html")
